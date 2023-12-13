@@ -1,0 +1,214 @@
+/*
+    signature color: #2ad04b
+    light mode color: #e3fae9
+    light mode box color: #f0faf3
+    dark mode color: #212521
+    dark mode box color: #1f211f
+*/
+
+
+body{
+    background-color: #e3fae9;
+}
+
+/*  login_page  */
+#login_background{
+    opacity: 0.2;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+}
+
+#full_logo{
+    width: 214px;
+    height: 120px;
+    
+    position: relative;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    margin-top: 20px;
+}
+
+#login_container{
+    padding: 10px;
+    background-color: #f0faf3;
+    box-shadow: 3px 3px 20px 3px rgb(213, 225, 214);
+    width: 500px;
+    height: 550px;
+    border-radius: 10px;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    
+}
+
+#login_box_header{
+    padding: 20px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#login_box_buttons{
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/*  main_page  */
+#header_logo{
+    height: 45px;
+}
+
+#header_account{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+#header{
+    background-color: #2ad04b;
+    padding-left: 15px;
+    padding-right: 15px;
+    height: 50px;
+    width: 100%;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#header_welcome{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#main_content{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    flex-wrap: nowrap;
+}
+
+#main_left{
+    height: 400px;
+    width: 400px;
+    position: sticky;
+    top: 0;
+}
+
+#main_notifications{
+    margin: 20px;
+    background-color: #f0faf3;
+    box-shadow: 3px 3px 20px 3px rgb(213, 225, 214);
+    height: 360px;
+    width: 400px;
+    border-radius: 10px;
+    overflow: scroll;
+    overflow-x: hidden;
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#main_user_list{
+    margin: 20px;
+    background-color: #f0faf3;
+    box-shadow: 3px 3px 20px 3px rgb(213, 225, 214);
+    height: 360px;
+    width: 400px;
+    border-radius: 10px;
+    overflow: scroll;
+    overflow-x: hidden;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.user_list_users{
+    width: 400px;
+    padding-left: 15px;
+    padding-right: 15px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#main_middle{
+    display: block;
+}
+
+#admin_post{
+    margin: 20px;
+    padding: 10px;
+    background-color: #f0faf3;
+    box-shadow: 3px 3px 20px 3px rgb(213, 225, 214);
+    width: 900px;
+    border-radius: 10px;
+}
+
+#main_posts{
+    margin: 20px;
+    background-color: #f0faf3;
+    box-shadow: 3px 3px 20px 3px rgb(213, 225, 214);
+    width: 950px;
+    max-width: 100%;
+    border-radius: 10px;
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#post_comment{
+    margin-left: 40px;
+}
+
+#event_post{
+    padding: 20px;
+    width: 950px;
+}
+#event_post_main{
+    padding: 10px;
+    background-color: rgba(157, 216, 162, 0.14);
+    border-radius: 10px;
+    width: 900px;
+}
+#detail_box{
+    padding: 10px;
+    background-color: rgba(157, 216, 162, 0.14);
+    border-radius: 10px;
+    width: 880px;
+    align-content: center;
+}
+
+.accordion{
+    margin: 20px;
+}
+#post_accordion{
+    background-color: "#f0faf3";
+    color: "black";
+    box-shadow: "3px 3px 20px 3px rgb(213, 225, 214)"
+}

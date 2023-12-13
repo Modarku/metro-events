@@ -1,0 +1,36 @@
+http://hyeumine.com/DL0wgqiJ/
+username: DL0wgqiJ
+password: HpdnXdyw
+
+MetroEvents (CommuniTea)
+Legend:
+	-Required features
+	*Optional features
+	+Features to complete required features
+
+User:
+	-Recieves notifications for upcomning events
+	-Can request to join the event
+	-Gets notifications from organizers whether their request has been accepted or not
+	-Reminders for upcoming events are also notified
+
+Organizer:
+	-Becomes a user first when registered
+	-They must request an administrator to give them organizer privileges
+	-Organizer reviews a user's request to join an event
+	+Organizer recieves notifications of which wants to join the event
+	
+Administrator:
+	-Grants users to be Organizers or Administrators
+	-Manages creation of events
+	+Grants Organizers the ability to manage an event once created
+
+Events:
+	-Main post of the app
+	-Contains participants, reviews, and an upvote system
+	-Can be cancelled in which a reason must be needed to notify the users who participated
+
+App Design:
+	+Notifications board
+	*header page that welcomes the user once logged in
+	
