@@ -46,7 +46,7 @@ if(!$isEmpty){
         'eventname' => $eventName,
         'eventdetails' => $eventDetails,
         'eventdate' => $eventDate,
-        'postvote' => 0,
+        'postvote' => [],
         'eventorganizer' => "none",
         'participants' => array(),
         'reviews' => array()

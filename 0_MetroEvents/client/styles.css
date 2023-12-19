@@ -130,7 +130,7 @@ body{
 
 #notif{
     margin: 10px;
-    background-color: rgba(157, 216, 162, 0.14);
+    background-color: rgba(157, 216, 162, 0.07);
     width: 370px;
     border-radius: 10px;
 }
@@ -198,13 +198,13 @@ body{
 }
 #event_post_main{
     padding: 10px;
-    background-color: rgba(157, 216, 162, 0.14);
+    background-color: rgba(157, 216, 162, 0.07);
     border-radius: 10px;
     width: 900px;
 }
 #detail_box{
     padding: 10px;
-    background-color: rgba(157, 216, 162, 0.14);
+    background-color: rgba(157, 216, 162, 0.07);
     border-radius: 10px;
     width: 880px;
     align-content: center;

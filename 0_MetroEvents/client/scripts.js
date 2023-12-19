@@ -2,13 +2,9 @@
 *
 * TO DO:
 * Clean up
-* Don't let admin post if all or one of the text is null
-* Don't let user log in or create account if text is null
-* Don't let user join an event if that event has no organizer
 * Prevent user from request joining again
-* fix upvoting
 *
-* OPTIONAL: (Turn into a notification)
+* OPTIONAL: (Turn into a notification theoretically)
 * Delete post
 * Delete user
 */
@@ -91,11 +87,11 @@ $(document).ready(function(){
                 let list_details = item.eventdetails == "" ? "no added details" : item.eventdetails.replace(/\n/g, "<br>");
                 string += 
                     `<div id="event_post">
-                    <div style="display: flex; justify-content: space-between">
-                        <h5>&emsp;${item.postdate}</h5>
-                        <h5>When: ${item.eventdate}</h5>
-                    </div>
                     <div id="event_post_main">
+                        <div style="display: flex; justify-content: space-between">
+                            <h5>Date posted: ${item.postdate}</h5>
+                            <h5>When: ${item.eventdate}</h5>
+                        </div>
                         <h3 style="text-align: center;"><b>${item.postid}. ${item.eventname}</b></h3>`;
                         if(item.eventorganizer == "none"){
                             string += ` <h4>Organizer: ${item.eventorganizer}</h4>`;
@@ -121,6 +117,7 @@ $(document).ready(function(){
                             if(!existParticipants){
                                 string += `<li><p class="dropdown-item">none</p></li>`
                             }
+                            existParticipants = false;
                 string +=   `</ul>
                         </div>
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">`;
@@ -133,29 +130,18 @@ $(document).ready(function(){
                         }else{
                             string += `<h5>You cannot join yet... there is no organizer &nbsp;&nbsp;</5>`;
                         }
-                            
-                            if(item.postvote.length){
-                                item.postvote.forEach(u =>{
-                                    if(u==session){
-                                        existUpvotes = true;
-                                        string += `<button type="button" class="btn active btn-outline-success me-md-2 upvote" data-bs-toggle="button" data-postid="${item.postid}">⇧</button>`;
-                                    }
-                                });
-                                if(!existUpvotes){
-                                    existUpvotes = false;
-                                    string += `<button type="button" class="btn btn-outline-success me-md-2 upvote" data-bs-toggle="button" data-postid="${item.postid}">⇧</button>`;
-                                }
-                                string += `<h4>${item.postvote.length}`;
+                        item.postvote.forEach(u =>{
+                            if(u == session){
+                                existUpvotes = true;
+                                string += `<button type="button" class="btn active btn-outline-success me-md-2 upvote" data-bs-toggle="button" data-postid="${item.postid}">⇧</button>`;
                             }
-                            else{
-                                string += `
-                                <button type="button" class="btn btn-outline-success me-md-2 upvote" data-bs-toggle="button" data-postid="${item.postid}">⇧</button>
-                                <h4>
-                                0`;
-                            }
-                string +=
-                        `</h4></div><br>
-                        <textarea class="form-control review-content${item.postid}" placeholder="Leave a review here" style="height: 100px"></textarea><br>
+                        });
+                        if(!existUpvotes){
+                            string += `<button type="button" class="btn btn-outline-success me-md-2 upvote" data-bs-toggle="button" data-postid="${item.postid}">⇧</button>`;
+                        }
+                        existUpvotes = false;
+                        string += `<h4>${item.postvote.length}</h4></div><br>
+                        <textarea name="Event Review" class="form-control review-content${item.postid}" placeholder="Leave a review here" style="height: 100px"></textarea><br>
                         <button class="btn btn-outline-success post-review" type="button" data-postid="${item.postid}">post review</button>
                     `;
                     if(item.reviews.length != 0){
@@ -194,9 +180,7 @@ $(document).ready(function(){
                 ctr++;
                 if(item.targetuid == session){
                     if(item.type == "event_upcoming"){
-                        alert("EVENT UPCOMING " + item.postdate + " == "+ currTime);
                         if(item.postdate == currTime){
-                            alert("CURR TIME");
                             string += `
                             <div id="notif">
                             <button type="button" class="btn btn-danger delete-notification" data-notifid=${item.notifid}>X</button>
@@ -214,7 +198,7 @@ $(document).ready(function(){
                             </div>
                             `;
                         }else if(userRole == "organizer"){
-                            string += `<button type="button" class="btn btn-success user-join" data-targetid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}" data-postdate="${item.postdate}">Jpin</button>
+                            string += `<button type="button" class="btn btn-success user-join" data-targetid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}" data-postdate="${item.postdate}">Accept</button>
                             </div>
                             `;
                         }else{
@@ -248,11 +232,11 @@ $(document).ready(function(){
                         <div class="accordion-body">
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="event-name" placeholder="Event name">
-                                <label for="floatingInput">Event name</label>
+                                <label for="event-name">Event name</label>
                             </div>
                             <div class="form-floating">
-                                <textarea class="form-control" placeholder="Leave a comment here" id="event-details" style="height: 100px"></textarea>
-                                <label for="floatingTextarea2">Details</label>
+                                <textarea name="Event Details" class="form-control" placeholder="Leave a comment here" id="event-details" style="height: 100px"></textarea>
+                                <label for="event-details">Details</label>
                             </div><br>
                             <input type="date" class="form-control" id="event-date" placeholder="Date"><br>
                             <button type="button" class="btn btn-success make_post">Post</button>
@@ -283,7 +267,156 @@ $(document).ready(function(){
         }
     }
 
-    function deleteNotif(notifID){
+
+//_________________________________________________________________________________________________________________________
+
+
+    //AJAX FUNCTIONS
+    function ajaxRegister(firstName, lastName){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/userRegistration.php",
+        {
+            firstname: firstName,
+            lastname: lastName,
+            role: "user"
+        },
+        function (data, status) {
+            data = JSON.stringify(data);
+            data = JSON.parse(data);
+            console.log("Data: " + JSON.stringify(data) + "\nStatus: " + status);
+            if (data.success == true) {
+                session = data.user.uid;
+                userRole = data.user.role;
+                console.log("Name: " + data.user.firstname + "\nSession: " + session + "\nRole: " + userRole);
+                alert("Welcome to CommuniTea");
+                globalFetch();
+                moveToMain();
+                return;
+            }else{
+                if(data.message === 'this name already exists!'){
+                    alert("This name already exists!");
+                }else if(data.message === 'EVERYTHING IS BROKEN'){
+                    alert("Server side is broken");
+                }else{
+                    alert("Client side is broken");
+                }
+            }
+        });
+    }
+
+    function ajaxLogin(firstName, lastName){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/userLogin.php",
+        {
+            firstname: firstName,
+            lastname: lastName
+        },
+        function (data, status) {
+            data = JSON.stringify(data);
+            data = JSON.parse(data);
+            console.log("Data: " + JSON.stringify(data) + "\nStatus: " + status);
+            if (data.success == true) {
+                session = data.user.uid;
+                userRole = data.user.role;
+                console.log("Name: " + data.user.firstname + "\nSession: " + session + "\nRole: " + userRole);
+                alert("Welcome to CommuniTea");
+                globalFetch();
+                moveToMain();
+                return;
+            }else{
+                if(data.message === 'user not found'){
+                    alert("This user has not been found! Would you like to register instead?");
+                }else{
+                    alert("AN ERROR HAS OCCURED");
+                }
+            }
+        });
+    }
+
+    function ajaxMakePost(eventName, eventDetails, eventDate){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postCreate.php?uid=" + session,
+        {
+            eventname: eventName,
+            eventdetails: eventDetails,
+            eventdate: eventDate
+        }, 
+        function (data, status){
+            data = JSON.stringify(data);
+            data = JSON.parse(data);
+            console.log("Data: " + data + "\nStatus: " + status + "\nsuccess: " + data.success);
+            if (status == "success") {
+                $("#event-name").val("");
+                $("#event-details").val("");
+                $("#event-date").val("");
+                alert("Event Posted")
+                globalFetch();
+                return;
+            }else{
+                if(data.message === 'EVERYTHING IS BROKEN'){
+                    alert("Server side is broken");
+                }else{
+                    alert("Client side is broken");
+                }
+            }
+        });
+    }
+
+    function ajaxUpvote(postID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/addUpvote.php?postid=" + postID + "&userid=" + session, function(data, status){
+            if(data.success == true){
+                console.log("UPVOTE: " + data.message + " ID: " + postID);
+                globalFetch();
+                moveToMain();
+            }else if(data.message == 'THERE IS NO POSTID NOR USER ID'){
+                alert("There is no post ID");
+            }else if(data.message === 'EVERYTHING IS BROKEN'){
+                alert("Server side is broken");
+            }else{
+                alert("Client side is broken");
+            }
+        });
+    }
+
+    function ajaxPostReview(postID, reviewDate, reviewContent){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postReview.php?postid=" + postID + "&uid=" + session, {
+            reviewdate: reviewDate,
+            username: USERNAME,
+            reviewcontent: reviewContent
+        }, function(data, status){
+            if(data.success == true){
+                console.log("review posted");
+                $(".review-content").val("");
+                globalFetch();
+                moveToMain();
+            }else if(data.message == "THERE IS NO USER UID NOR POSTID"){
+                alert("There is no user ID nor post ID");
+            }else if(data.message === 'EVERYTHING IS BROKEN'){
+                alert("Server side is broken");
+            }else{
+                alert("Client side is broken");
+            }
+        });
+    }
+
+    function ajaxDeletePost(postID){
+
+    }
+
+    function ajaxDeleteReview(postID, reviewID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteReview.php?postid=" + postID + "&reviewid=" + reviewID, function(data, status){
+            if(data.success == true){
+                console.log("review deleted");
+                globalFetch();
+                moveToMain();
+            }else if(data.message == "THERE IS NO POST ID NOR REVIEW ID"){
+                alert("There is no post ID nor review ID");
+            }else if(data.message === 'EVERYTHING IS BROKEN'){
+                alert("Server side is broken");
+            }else{
+                alert("Client side is broken");
+            }
+        });
+    }
+
+    function ajaxDeleteNotif(notifID){
         $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteNotif.php?notifid=" + notifID, function(data, status){
             if(data.success == true){
                 console.log("notification removed");
@@ -299,21 +432,84 @@ $(document).ready(function(){
         });
     }
 
-    function getUserFromID(uid) {
-        return new Promise(function(resolve, reject) {
-            $.get("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/getUserList.php", function(data, status) {
-                data = JSON.stringify(data);
-                data = JSON.parse(data);
-    
-                var username;
-                data.forEach(item => {
-                    if (item.uid == uid) {
-                        username = item.firstname + " " + item.lastname;
-                        resolve(username);
-                    }
-                });
-                reject(new Error('User not found'));
-            });
+    function ajaxMakeAdmin(userID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeAdmin.php?id=" + userID, function(data, status){
+            if(data.success == true){
+                console.log("administrator made");
+                globalFetch();
+                moveToMain();
+            }else if(data.message == 'THERE IS NO USER ID'){
+                alert("There is no user ID");
+            }
+        });
+    }
+
+    function ajaxMakeUser(userID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeUser.php?id=" + userID, function(data,status){
+            if(data.success == true){
+                console.log("reverted to user");
+                userRole = "user";
+                globalFetch();
+                moveToMain();
+            }else if(data.message == 'THERE IS NO USER ID'){
+                alert("There is no user ID");
+            }
+        });
+    }
+
+    function ajaxMakeOrganizer(userID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeOrganizer.php?id=" + userID, function(data,status){
+            if(data.success == true){
+                console.log("became organizer");
+                userRole = "organizer";
+            }else if(data.message == 'THERE IS NO USER ID'){
+                alert("There is no user ID");
+            }
+        });
+    }
+
+    function ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/notifCreate.php", {
+            type: type,
+            uid: userID,
+            targetuid: targetID,
+            postid: postID,
+            postdate: postDate,
+            notifname: notifName,
+            notifdetails: notifDetails
+        }, 
+        function(data, status){
+            if(data.success == true){
+                globalFetch();
+                moveToMain();
+                alert("request sent to administrator");
+            }else if(data.message = "THERE IS NO USER UID, TARGET UID, OR TYPE"){
+                alert("There is no userid, target id, nor type");
+            }
+        });
+    }
+
+    function ajaxPostOrganizer(userID, postID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postOrganizer.php?uid=" + userID + "&postid=" + postID, function(data,status){
+            if(data.success == true){
+                console.log("became organizer for this event: " + postID);
+            }else if(data.message == 'THERE IS NO USER UID NOR POSTID'){
+                alert("There is no uid or postid");
+            }else if(data.message == 'Post was not found'){
+                alert("Post was not found...");
+            }
+        });
+    }
+
+    function ajaxPostParticipant(userID, postID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postParticipant.php?uid=" + userID + "&postid=" + postID, function(data,status){
+            if(data.success == true){
+                console.log("became participant for this event: " + postID);
+            }else if(data.message == 'THERE IS NO USER UID NOR POSTID'){
+                alert("There is no uid or postid");
+            }else if(data.message == 'Post was not found'){
+                alert("Post was not found...");
+            }
         });
     }
 
@@ -351,7 +547,7 @@ $(document).ready(function(){
 
 
 
-    //RUNTIME
+    //RUNTIME & AJAX
     const currTime = getCurrTime();
     globalFetch();
     
@@ -367,72 +563,24 @@ $(document).ready(function(){
         firstName = $("#first-name").val();
         lastName = $("#last-name").val();
         USERNAME = firstName + " "+ lastName;
-
         if (firstName === "" || lastName === "") {
             alert("NO USERNAME BRUH");
             return;
         }
 
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/userRegistration.php",
-        {
-            firstname: firstName,
-            lastname: lastName,
-            role: "user"
-        },
-        function (data, status) {
-            data = JSON.stringify(data);
-            data = JSON.parse(data);
-            console.log("Data: " + JSON.stringify(data) + "\nStatus: " + status);
-            if (data.success == true) {
-                session = data.user.uid;
-                userRole = data.user.role;
-                console.log("Name: " + data.user.firstname + "\nSession: " + session + "\nRole: " + userRole);
-                alert("Welcome to CommuniTea");
-                globalFetch();
-                moveToMain();
-                return;
-            }else{
-                if(data.message === 'this name already exists!'){
-                    alert("This name already exists!");
-                }else if(data.message === 'EVERYTHING IS BROKEN'){
-                    alert("Server side is broken");
-                }else{
-                    alert("Client side is broken");
-                }
-            }
-        });
+        ajaxRegister(firstName, lastName);
     });
 
     $('#log_in').click(function(){
         firstName = $("#first-name").val();
         lastName = $("#last-name").val();
-        USERNAME = firstName + " "+lastName;
+        USERNAME = firstName + " " + lastName;
+        if(firstName == "" && lastName == ""){
+            alert("You must not leave name empty!");
+            return;
+        }
 
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/userLogin.php",
-        {
-            firstname: firstName,
-            lastname: lastName
-        },
-        function (data, status) {
-            data = JSON.stringify(data);
-            data = JSON.parse(data);
-            console.log("Data: " + JSON.stringify(data) + "\nStatus: " + status);
-            if (data.success == true) {
-                session = data.user.uid;
-                userRole = data.user.role;
-                console.log("Name: " + data.user.firstname + "\nSession: " + session + "\nRole: " + userRole);
-                alert("Welcome to CommuniTea");
-                globalFetch();
-                moveToMain();
-                return;
-            }else{
-                if(data.message === 'user not found'){
-                    alert("This user has not been found! Would you like to register instead?");
-                }else{
-                    alert("AN ERROR HAS OCCURED");
-                }
-            }
-        });
+        ajaxLogin(firstName, lastName);
     });
 
     $("#log_out").click(function(){
@@ -452,7 +600,6 @@ $(document).ready(function(){
                 }else{
                     alert("AN ERROR HAS OCCURED");
                 }
-                
             }
         });
     });
@@ -462,50 +609,21 @@ $(document).ready(function(){
         let eventDetails = $("#event-details").val();
         let eventDate = $("#event-date").val();
         console.log("making post: " + eventName);
+        if(eventName == "" && eventDate == ""){
+            alert("Fill the necessary fields!");
+        }else if(eventName == ""){
+            alert("Event name cannot be blank");
+        }else if(eventDate == ""){
+            alert("Date cannot be blank");
+        }
 
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postCreate.php?uid=" + session,
-        {
-            eventname: eventName,
-            eventdetails: eventDetails,
-            eventdate: eventDate
-        }, 
-        function (data, status){
-            data = JSON.stringify(data);
-            data = JSON.parse(data);
-            console.log("Data: " + data + "\nStatus: " + status + "\nsuccess: " + data.success);
-            if (status == "success") {
-                $("#event-name").val("");
-                $("#event-details").val("");
-                $("#event-date").val("");
-                alert("Event Posted")
-                globalFetch();
-                return;
-            }else{
-                if(data.message === 'EVERYTHING IS BROKEN'){
-                    alert("Server side is broken");
-                }else{
-                    alert("Client side is broken");
-                }
-            }
-        });
+        ajaxMakePost(session, eventName, eventDetails, eventDate);
     });
 
-    $("#posts").on("click", ".upvote", function(){
+    $(document).on("click", "#posts .upvote", function(){
         const postID = $(this).data("postid");
         console.log("upvote clicked");
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/addUpvote.php?postid=" + postID + "&userid=" + session, function(data, status){
-            if(data.success == true){
-                console.log(data.message);
-                globalFetch();
-                moveToMain();
-            }else if(data.message == 'THERE IS NO POSTID NOR USER ID'){
-                alert("There is no post ID");
-            }else if(data.message === 'EVERYTHING IS BROKEN'){
-                alert("Server side is broken");
-            }else{
-                alert("Client side is broken");
-            }
-        });
+        ajaxUpvote(postID);
     });
 
     $("#posts").on("click", ".post-review", function(){
@@ -513,78 +631,32 @@ $(document).ready(function(){
         let reviewDate = $("#event-date").val();
         let reviewContent = $(".review-content" + postID).val();
         if(!reviewContent){
-            alert("textarea is null");
+            alert("Cannot post with no review");
             return;
         }
         
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postReview.php?postid=" + postID + "&uid=" + session, {
-            reviewdate: reviewDate,
-            username: USERNAME,
-            reviewcontent: reviewContent
-        }, function(data, status){
-            if(data.success == true){
-                console.log("review posted");
-                $(".review-content").val("");
-                globalFetch();
-                moveToMain();
-            }else if(data.message == "THERE IS NO USER UID NOR POSTID"){
-                alert("There is no user ID nor post ID");
-            }else if(data.message === 'EVERYTHING IS BROKEN'){
-                alert("Server side is broken");
-            }else{
-                alert("Client side is broken");
-            }
-        });
+        ajaxPostReview(postID, reviewDate, reviewContent);
     });
 
     $("#posts").on("click", ".delete-review", function(){
         const postID = $(this).data("postid");
         const reviewID = $(this).data("reviewid");
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteReview.php?postid=" + postID + "&reviewid=" + reviewID, function(data, status){
-            if(data.success == true){
-                console.log("review deleted");
-                globalFetch();
-                moveToMain();
-            }else if(data.message == "THERE IS NO POST ID NOR REVIEW ID"){
-                alert("There is no post ID nor review ID");
-            }else if(data.message === 'EVERYTHING IS BROKEN'){
-                alert("Server side is broken");
-            }else{
-                alert("Client side is broken");
-            }
-        });
+        ajaxDeleteReview(postID, reviewID);
     });
 
     $("#notifications").on("click", ".delete-notification", function(){
         const notifID = $(this).data("notifid");
-        deleteNotif(notifID);
+        ajaxDeleteNotif(notifID);
     })
 
     $("#user_list").on("click", ".administrator", function(){
         const userID = $(this).data("uid");
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeAdmin.php?id=" + userID, function(data, status){
-            if(data.success == true){
-                console.log("administrator made");
-                globalFetch();
-                moveToMain();
-            }else if(data.message == 'THERE IS NO USER ID'){
-                alert("There is no user ID");
-            }
-        });
+        ajaxMakeAdmin(userID);
     });
 
     $("#user_list").on("click", ".user", function(){
         const userID = $(this).data("uid");
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeUser.php?id=" + userID, function(data,status){
-            if(data.success == true){
-                console.log("reverted to user");
-                userRole = "user";
-                globalFetch();
-                moveToMain();
-            }else if(data.message == 'THERE IS NO USER ID'){
-                alert("There is no user ID");
-            }
-        });
+        ajaxMakeUser(userID);
     });
 
     $(document).on("click", "#event_post_main .organizer", function(){
@@ -596,29 +668,12 @@ $(document).ready(function(){
         let user;
         notifName = "A user requests to organize your event!";
         notifDetails = "A user: " + userID + " wants to organize the event: " + postID;
-        //alert("uid: " + userID + " postid: " + postID + " targetid: " + targetID);
         if(userRole == "administrator"){
             alert("An admin cannot be an organizer!");
             return;
         }
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/notifCreate.php", {
-            type: type,
-            uid: userID,
-            targetuid: targetID,
-            postid: postID,
-            postdate: postDate,
-            notifname: notifName,
-            notifdetails: notifDetails
-        }, 
-        function(data, status){
-            if(data.success == true){
-                globalFetch();
-                moveToMain();
-                alert("request sent to administrator");
-            }else if(data.message = "THERE IS NO USER UID, TARGET UID, OR TYPE"){
-                alert("There is no userid, target id, nor type");
-            }
-        });
+        
+        ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails);
     });
 
     $(document).on("click", "#notif .make-organizer", function(){
@@ -627,39 +682,11 @@ $(document).ready(function(){
         const notifID = $(this).data("notifid");
         console.log("button pressed");
         //converts user to organizer
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeOrganizer.php?id=" + userID, function(data,status){
-            if(data.success == true){
-                console.log("became organizer");
-                userRole = "organizer";
-            }else if(data.message == 'THERE IS NO USER ID'){
-                alert("There is no user ID");
-            }
-        });
+        ajaxMakeOrganizer(userID);
         //puts organizer as the organizer for the event
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postOrganizer.php?uid=" + userID + "&postid=" + postID, function(data,status){
-            if(data.success == true){
-                console.log("became organizer for this event: " + postID);
-            }else if(data.message == 'THERE IS NO USER UID NOR POSTID'){
-                alert("There is no uid or postid");
-            }else if(data.message == 'Post was not found'){
-                alert("Post was not found...");
-            }
-        });
+        ajaxPostOrganizer(userID, postID);
         //deletes the notification once everything is done
-        deleteNotif(notifID);
-        // $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteNotif.php?notifid=" + notifID, function(data, status){
-        //     if(data.success == true){
-        //         console.log("notification removed");
-        //         globalFetch();
-        //         moveToMain();
-        //     }else if(data.message == 'THERE IS NO NOTIFICATION ID'){
-        //         alert("There is no notification id");
-        //     }else if(data.message == 'EVERYTHING IS BROKEN'){
-        //         alert("server side is broken");
-        //     }else{
-        //         alert("client side is broken");
-        //     }
-        // });
+        ajaxDeleteNotif(notifID);
     });
 
     $(document).on("click", "#event_post_main .join-event", function(){
@@ -670,24 +697,8 @@ $(document).ready(function(){
         const type = "request_to_join";
         notifName = "A user requests to join your event!";
         notifDetails = "A user: " + userID + " wants to join the event: " + postID;
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/notifCreate.php", {
-            type: type,
-            uid: userID,
-            targetuid: targetID,
-            postid: postID,
-            postdate: postDate,
-            notifname: notifName,
-            notifdetails: notifDetails
-        }, 
-        function(data, status){
-            if(data.success == true){
-                globalFetch();
-                moveToMain();
-                alert("request sent to organizer");
-            }else if(data.message = "THERE IS NO USER UID, TARGET UID, OR TYPE"){
-                alert("There is no userid, target id, nor type");
-            }
-        });
+
+        ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails);
     });
 
     $(document).on("click", "#notif .user-join", function(){
@@ -700,70 +711,13 @@ $(document).ready(function(){
         const type = "event_upcoming";
         notifName = "An event is today! 🎉";
         notifDetails = "Event: " + postID + " is today! Go and enjoy yourself.";
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/notifCreate.php", {
-            type: type,
-            uid: userID,
-            targetuid: targetID,
-            postid: postID,
-            postdate: postDate,
-            notifname: notifName,
-            notifdetails: notifDetails
-        }, 
-        function(data, status){
-            if(data.success == true){
-                console.log("Notification prefetched");
-            }else if(data.message = "THERE IS NO USER UID, TARGET UID, OR TYPE"){
-                alert("There is no userid, target id, nor type");
-            }
-        });
+
+        ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails);
         //puts organizer as the organizer for the event
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postParticipant.php?uid=" + userID + "&postid=" + postID, function(data,status){
-            if(data.success == true){
-                console.log("became participant for this event: " + postID);
-            }else if(data.message == 'THERE IS NO USER UID NOR POSTID'){
-                alert("There is no uid or postid");
-            }else if(data.message == 'Post was not found'){
-                alert("Post was not found...");
-            }
-        });
+        ajaxPostParticipant(userID, postID);
         //deletes the notification once everything is done
-        deleteNotif(notifID);
-        // $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteNotif.php?notifid=" + notifID, function(data, status){
-        //     if(data.success == true){
-        //         console.log("notification removed");
-        //         globalFetch();
-        //         moveToMain();
-        //     }else if(data.message == 'THERE IS NO NOTIFICATION ID'){
-        //         alert("There is no notification id");
-        //     }else if(data.message == 'EVERYTHING IS BROKEN'){
-        //         alert("server side is broken");
-        //     }else{
-        //         alert("client side is broken");
-        //     }
-        // });
+        ajaxDeleteNotif(notifID);
     });
     
     console.log("Document is ready");
 });
-
-    /*
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeOrganizer.php?id=" + userID, function(data,status){
-            if(data.success == true){
-                console.log("became organizer");
-                userRole = "organizer";
-            }else if(data.message == 'THERE IS NO USER ID'){
-                alert("There is no user ID");
-            }
-        });
-        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postOrganizer.php?uid=" + userID + "&postid=" + postID, function(data,status){
-            if(data.success == true){
-                console.log("became organizer for this event: " + postID);
-                globalFetch();
-                moveToMain();
-            }else if(data.message == 'THERE IS NO USER UID NOR POSTID'){
-                alert("There is no uid or postid");
-            }else if(data.message == 'Post was not found'){
-                alert("Post was not found...");
-            }
-        });
-    */
