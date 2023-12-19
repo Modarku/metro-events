@@ -21,7 +21,7 @@ $postArr = json_decode($posts, true);
 $isEmpty = false;
 
 // Extract data from the POST request
-$postDate = date('Y-m-d H:i:s');
+$postDate = date('Y-m-d');
 $eventName = isset($_POST['eventname']) ? $_POST['eventname'] : '';
 $eventDetails = isset($_POST['eventdetails']) ? $_POST['eventdetails'] : '';
 $eventDate = isset($_POST['eventdate']) ? $_POST['eventdate'] : '';

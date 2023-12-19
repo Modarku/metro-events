@@ -125,8 +125,14 @@ body{
 
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     align-items: center;
+}
+
+#notif{
+    margin: 10px;
+    background-color: rgba(157, 216, 162, 0.14);
+    width: 370px;
+    border-radius: 10px;
 }
 
 #main_user_list{

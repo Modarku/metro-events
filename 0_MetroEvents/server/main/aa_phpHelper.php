@@ -24,4 +24,16 @@
         }
         return ++$idMAX;
     };
+
+    $create_notifid = function(){
+        $notifs = file_get_contents("../json/notifs.json");
+        $notifArr = json_decode($notifs);
+        $idMAX = 0;
+        foreach ($notifArr as $notif){
+            if($notif->notifid > $idMAX){
+                $idMAX = $notif->notifid;
+            }
+        }
+        return ++$idMAX;
+    };
 ?>
