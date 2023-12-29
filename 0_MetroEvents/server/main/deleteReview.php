@@ -38,7 +38,6 @@ if(!$isEmpty){
     foreach($postArr as &$post){
         if($postid == $post['postid']){
             foreach($post['reviews'] as $index => &$r){
-                $index = array_search($r, $post);
                 if($reviewid == $index){
                     unset($post['reviews'][$index]);
                     $isRemoved = true;

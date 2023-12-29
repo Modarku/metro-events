@@ -1,16 +1,3 @@
-/*
-*
-* TO DO:
-* Clean up
-* Prevent user from request joining again
-*
-* OPTIONAL: (Turn into a notification theoretically)
-* Delete post
-* Delete user
-*/
-
-
-
 $(document).ready(function(){
     let USERNAME;
     let firstName;
@@ -19,17 +6,20 @@ $(document).ready(function(){
     let userRole;
     let string = "";
     let isDarkTheme = false;
+    let currYear;
+    let currMonth;
+    let currDay;
     
     //METHODS
     getCurrTime = function(){
         var timestamp = $.now();
         var currentDate = new Date(timestamp);
 
-        var year = currentDate.getFullYear();
-        var month = currentDate.getMonth() + 1;
-        var day = currentDate.getDate();
+        currYear = currentDate.getFullYear();
+        currMonth = currentDate.getMonth() + 1;
+        currDay = currentDate.getDate();
 
-        return formattedTime = year + '-' + month + '-' + day;
+        return formattedTime = currYear + '-' + currMonth + '-' + currDay;
     }
 
     globalFetch = function(){
@@ -44,7 +34,6 @@ $(document).ready(function(){
             data = JSON.stringify(data);
             data = JSON.parse(data);
             $("#user_list").empty();
-            console.log(data);
 
             data.forEach(item =>{
                 let list_username = item.firstname + " " + item.lastname;
@@ -81,16 +70,26 @@ $(document).ready(function(){
             let existUpvotes = false;
             let existParticipants = false;
             $("#posts").empty();
-            console.log(data);
 
             data.forEach(item =>{
+                let dateCurr = new Date(`${currYear}-${currMonth}-${currDay}`);
+                let dateDeadline = new Date(item.eventdate);
+                if(dateCurr > dateDeadline){
+                    ajaxDeletePost(item.postid)
+                    return;
+                }
+
                 let list_details = item.eventdetails == "" ? "no added details" : item.eventdetails.replace(/\n/g, "<br>");
                 string += 
                     `<div id="event_post">
                     <div id="event_post_main">
                         <div style="display: flex; justify-content: space-between">
                             <h5>Date posted: ${item.postdate}</h5>
-                            <h5>When: ${item.eventdate}</h5>
+                            <h5>When: ${item.eventdate}</h5>`;
+                            if(item.uid == session){
+                                string += `<button type="button" class="btn btn-danger delete-post" data-uid="${session}" data-postdate="postdate" data-postid="${item.postid}" data-targetid="${item.eventorganizer.uid}" data-organizer="${item.eventorganizer}">Delete Post</button>`;
+                            }
+                string += `
                         </div>
                         <h3 style="text-align: center;"><b>${item.postid}. ${item.eventname}</b></h3>`;
                         if(item.eventorganizer == "none"){
@@ -121,7 +120,7 @@ $(document).ready(function(){
                 string +=   `</ul>
                         </div>
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">`;
-                        if(item.eventorganizer != "none"){
+                            if(item.eventorganizer != "none"){
                             if(item.eventorganizer.uid == session){
                                 string += `<h5>You are the organizer of this event &nbsp;&nbsp;</5>`;
                             }else{
@@ -138,7 +137,7 @@ $(document).ready(function(){
                         });
                         if(!existUpvotes){
                             string += `<button type="button" class="btn btn-outline-success me-md-2 upvote" data-bs-toggle="button" data-postid="${item.postid}">⇧</button>`;
-                        }
+                                }
                         existUpvotes = false;
                         string += `<h4>${item.postvote.length}</h4></div><br>
                         <textarea name="Event Review" class="form-control review-content${item.postid}" placeholder="Leave a review here" style="height: 100px"></textarea><br>
@@ -162,7 +161,7 @@ $(document).ready(function(){
                         ctr = 0;
                     }
                 string += `</div></div>`;
-            })
+            });
             $("#posts").append(string);
             string = "";
         });
@@ -174,7 +173,6 @@ $(document).ready(function(){
             data = JSON.parse(data);
             let ctr = 0;
             $("#notifications").empty();
-            console.log(data);
 
             data.forEach(item =>{
                 ctr++;
@@ -187,6 +185,12 @@ $(document).ready(function(){
                             <h5>${item.notifname}</h5>
                             <p>${item.notifdetails}</p>`;
                         }
+                    }else if(item.type == "post_deleted_to_organizer"){
+                        string += `
+                        <div id="notif">
+                        <button type="button" class="btn btn-danger delete-notification" data-notifid=${item.notifid}>X</button>
+                        <h5>${item.notifname}</h5>
+                        <p>${item.notifdetails}</p>`;
                     }else{
                         string += `
                         <div id="notif">
@@ -194,18 +198,12 @@ $(document).ready(function(){
                         <h5>${item.notifname}</h5>
                         <p>${item.notifdetails}</p>`;
                         if(userRole == "administrator"){
-                            string += `<button type="button" class="btn btn-success make-organizer" data-uid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}">Accept</button>
-                            </div>
-                            `;
+                            string += `<button type="button" class="btn btn-success make-organizer" data-uid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}">Accept</button>`;
                         }else if(userRole == "organizer"){
-                            string += `<button type="button" class="btn btn-success user-join" data-targetid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}" data-postdate="${item.postdate}">Accept</button>
-                            </div>
-                            `;
-                        }else{
-                            string += `</div>`;
+                            string += `<button type="button" class="btn btn-success user-join" data-targetid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}" data-postdate="${item.postdate}">Accept</button>`;
                         }
                     }
-                    
+                    string += `</div>`;
                 }
             })
             $("#notifications").append(string);
@@ -220,7 +218,9 @@ $(document).ready(function(){
             $("#main_page").show();
             $("#header_welcome").empty();
             $("#admin_post").empty();
-            string += `<h4 style="padding-top: 5px; color: white;">Welcome, ${userRole.toUpperCase()}: ` + USERNAME + `&emsp; </h4>`;
+            string +=   `<h4 style="padding-top: 5px; color: white;">Welcome, ${userRole.toUpperCase()}: ${USERNAME} &emsp; </h4>
+                        <button type="button" class="btn btn-success log-out">Log Out</button>&emsp;
+                        <button type="button" class="btn btn-outline-danger delete-account">Delete Account</button>`;
             if(userRole == "administrator"){
                 $("#admin_post").show();
                 //Adding post feature for administrator
@@ -252,7 +252,7 @@ $(document).ready(function(){
             string = "";
 
         }else{
-            console.log("moveToMain error");
+            alert("moveToMain error");
         }
     }
 
@@ -263,7 +263,7 @@ $(document).ready(function(){
             $("#main_page").hide();
             globalFetch();
         }else{
-            console.log("moveToLogin error");
+            alert("moveToLogin error");
         }
     }
 
@@ -331,7 +331,28 @@ $(document).ready(function(){
         });
     }
 
-    function ajaxMakePost(eventName, eventDetails, eventDate){
+    function ajaxLogout(){
+        $.get("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/userLogout.php", function (data, status){
+            data = JSON.stringify(data);
+            data = JSON.parse(data);
+            if (data.success == true) {
+                session = null;
+                userRole = null;
+                alert("Logged out");
+                moveToLogin();
+                userArr = [];
+                return;
+            }else{
+                if(data.message === 'SESSION not empty'){
+                    alert("Server side: SESSION not empty");
+                }else{
+                    alert("AN ERROR HAS OCCURED");
+                }
+            }
+        });
+    }
+
+    function ajaxMakePost(session, eventName, eventDetails, eventDate){
         $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/postCreate.php?uid=" + session,
         {
             eventname: eventName,
@@ -396,11 +417,38 @@ $(document).ready(function(){
         });
     }
 
-    function ajaxDeletePost(postID){
+    function ajaxDeleteUser(){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteUser.php?uid=" + session, function(data, status){
+            if(data.success == true){
+                console.log("user deleted");
+            }else if(data.message == "THERE IS NO POST ID "){
+                alert("There is no post ID");
+            }else if(data.message === 'EVERYTHING IS BROKEN'){
+                alert("Server side is broken");
+            }else{
+                alert("1Client side is broken");
+            }
+        });
+    }
 
+    function ajaxDeletePost(postID){
+        $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deletePost.php?postid=" + postID, function(data, status){
+            if(data.success == true){
+                alert("post deleted");
+                globalFetch();
+                
+            }else if(data.message == "THERE IS NO POST ID "){
+                alert("There is no post ID");
+            }else if(data.message === 'EVERYTHING IS BROKEN'){
+                alert("Server side is broken");
+            }else{
+                alert("1Client side is broken");
+            }
+        });
     }
 
     function ajaxDeleteReview(postID, reviewID){
+        console.log(postID + " " + reviewID);
         $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/deleteReview.php?postid=" + postID + "&reviewid=" + reviewID, function(data, status){
             if(data.success == true){
                 console.log("review deleted");
@@ -461,7 +509,6 @@ $(document).ready(function(){
         $.post("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/makeOrganizer.php?id=" + userID, function(data,status){
             if(data.success == true){
                 console.log("became organizer");
-                userRole = "organizer";
             }else if(data.message == 'THERE IS NO USER ID'){
                 alert("There is no user ID");
             }
@@ -583,40 +630,34 @@ $(document).ready(function(){
         ajaxLogin(firstName, lastName);
     });
 
-    $("#log_out").click(function(){
-        $.get("http://hyeumine.com/DL0wgqiJ/Olamit/MetroEvent/main/userLogout.php", function (data, status){
-            data = JSON.stringify(data);
-            data = JSON.parse(data);
-            if (data.success == true) {
-                session = null;
-                userRole = null;
-                alert("Logged out");
-                moveToLogin();
-                userArr = [];
-                return;
-            }else{
-                if(data.message === 'SESSION not empty'){
-                    alert("Server side: SESSION not empty");
-                }else{
-                    alert("AN ERROR HAS OCCURED");
-                }
-            }
-        });
+    $("#header_account").on("click", ".log-out", function(){
+        ajaxLogout();
     });
 
     $("#admin_post").on("click", ".make_post", function(){
         let eventName = $("#event-name").val();
         let eventDetails = $("#event-details").val();
         let eventDate = $("#event-date").val();
+        
         console.log("making post: " + eventName);
         if(eventName == "" && eventDate == ""){
             alert("Fill the necessary fields!");
+            return;
         }else if(eventName == ""){
             alert("Event name cannot be blank");
+            return;
         }else if(eventDate == ""){
             alert("Date cannot be blank");
+            return;
         }
 
+        let dateCurr = new Date(`${currYear}-${currMonth}-${currDay}`);
+        let dateDeadline = new Date(eventDate);
+
+        if(dateCurr > dateDeadline){
+            alert("This date is invalid!");
+            return;
+        }
         ajaxMakePost(session, eventName, eventDetails, eventDate);
     });
 
@@ -638,9 +679,39 @@ $(document).ready(function(){
         ajaxPostReview(postID, reviewDate, reviewContent);
     });
 
+    $("#header_account").on("click", ".delete-account", function(){
+        let deleteAccount = window.confirm("Are you sure you want to delete your account?");
+        if(deleteAccount){
+            ajaxDeleteUser();
+            ajaxLogout();
+        }
+        
+    });
+
+    $("#posts").on("click", ".delete-post", function(){
+        const postID = $(this).data("postid");
+        const organizer = $(this).data("organizer");
+        if(organizer == "none"){
+            ajaxDeletePost(postID);
+            moveToMain();
+        }else{
+            const userID = $(this).data("uid");
+            const targetID = $(this).data("targetid");
+            const postDate = $(this).data("postdate");
+            const type = "post_deleted_to_organizer"
+            notifName = "Event you organized has been deleted";
+            notifDetails = "Post: " + postID + " has been deleted by the owner";
+            
+            ajaxDeletePost(postID);
+            ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails);
+            ajaxMakeUser(targetID);
+        }
+    });
+
     $("#posts").on("click", ".delete-review", function(){
         const postID = $(this).data("postid");
         const reviewID = $(this).data("reviewid");
+        console.log(postID + " " + reviewID);
         ajaxDeleteReview(postID, reviewID);
     });
 
