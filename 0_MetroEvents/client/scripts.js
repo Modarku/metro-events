@@ -200,7 +200,7 @@ $(document).ready(function(){
                         if(userRole == "administrator"){
                             string += `<button type="button" class="btn btn-success make-organizer" data-uid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}">Accept</button>`;
                         }else if(userRole == "organizer"){
-                            string += `<button type="button" class="btn btn-success user-join" data-targetid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}" data-postdate="${item.postdate}">Accept</button>`;
+                            string += `<button type="button" class="btn btn-success user-join" data-targetid="${item.uid}" data-postid="${item.postid}" data-notifid="${item.notifid}" data-postdate="${item.eventdate}">Accept</button>`;
                         }
                     }
                     string += `</div>`;
@@ -529,7 +529,6 @@ $(document).ready(function(){
             if(data.success == true){
                 globalFetch();
                 moveToMain();
-                alert("request sent to administrator");
             }else if(data.message = "THERE IS NO USER UID, TARGET UID, OR TYPE"){
                 alert("There is no userid, target id, nor type");
             }
@@ -745,6 +744,7 @@ $(document).ready(function(){
         }
         
         ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails);
+        alert("Request sent to administrator");
     });
 
     $(document).on("click", "#notif .make-organizer", function(){
@@ -770,6 +770,7 @@ $(document).ready(function(){
         notifDetails = "A user: " + userID + " wants to join the event: " + postID;
 
         ajaxMakeNotif(userID, postID, targetID, postDate, type, notifName, notifDetails);
+        alert("Request sent to organizer");
     });
 
     $(document).on("click", "#notif .user-join", function(){
